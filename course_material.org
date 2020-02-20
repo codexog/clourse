@@ -1,0 +1,442 @@
+#+TITLE: Programming Accelerator
+
+* Fibonacci And Collatz
+The essence of almost every 'functional technique' can be illustrated by the following snippets all encoding the same function, the Fibonacci sequence and Collatz sequences. Neither of the two is a good candidate for concurrency. But it is possible to use multiple threads for counting the number of collatz sequences that occur up to some point. A demonstration of how this is done for 
+- Optimal substructure
+- other term I forget
+- it is possible that the god damn sudoku example should be included
+
+Also make sure to include how, using higher order functions (and perhaps a dsl), the algorithms can be made extremely generic at quite a low cost.
+** Naive Recursive
+Naive recursive implementation. Complexity \(O(2^n)\).
+#+BEGIN_SRC clojure
+  (defn fibonacci [n]
+    (when (>= n 0)
+      (case n
+        0 0
+        1 1
+        (+ (fibonacci (dec n)) (fibonacci (dec (dec n)))))))
+
+  (defn collatz [n]
+    (when (>= n 0)
+      (case n
+        0 '(0)
+        1 '(1)
+        (cons n (collatz (if (even? n)
+                           (/ n 2)
+                           (inc (* 3 n))))))))
+#+END_SRC
+
+** Tail Recursive
+Simple tail recursive implementation. Complexity \(O(n)\).
+#+BEGIN_SRC clojure
+  (defn fibonacci [n]
+    (when (>= n 0)
+      (case n
+        0 0
+        1 1
+        (loop [prevprev 0 prev 1 n n]
+          (if (or (= n 1) (= n 0))
+            (+ prev prevprev)
+            (recur prev (+ prev prevprev) (dec n)))))))
+
+  (defn collatz [n]
+    (when (>= n 0)
+      (loop [collatz-seq-for-n '() n n]
+        (if (or (= n 1) (= n 0))
+          (cons n collatz-seq-for-n)
+          (recur (cons n collatz-seq-for-n)
+                 (if (even? n)
+                   (/ n 2)
+                   (inc (* 3 n))))))))
+#+END_SRC
+** Memoized
+#+BEGIN_SRC clojure
+  (def fibonacci
+    (memoize (fn [n]
+               (when (>= n 0)
+                 (case n
+                   0 0
+                   1 1
+                   (+ (fibonacci (- n 1))
+                      (fibonacci (- n 2))))))))
+
+  (def collatz
+    (memoize (fn [n]
+               (when (>= n 0)
+                 (case n
+                   0 0
+                   1 1
+                   (cons n (collatz (if (even? n)
+                                      (/ n 2)
+                                      (inc (* 3 n))))))))))
+                                      #+END_SRC
+
+The nature of persistent datastructures means that the memoization of the collatz conjecture actually is done by sharing the structure that can be shared rather than by storing it over and over again. There are instances where one must do a bit more work to make sure that the memoized data isn't unnecessarily large.
+
+** Lazyness
+*** Lazy sequence
+#+BEGIN_SRC clojure
+  (defn fibonacci [n]
+    (nth n (flatten (iterate (fn [[a b]] [(+ a b) (+ a b b)]) [0 1]))))
+
+  (defn collatz [n]
+    (iterate (fn [n] (if (even? n) (/ n 2) (inc (* 3 n)))) n))
+#+END_SRC
+*** External walk structure
+#+BEGIN_SRC clojure
+  (def fibonacci-sequence
+    (map first (cons [0 1] (iterate (fn [a b] [(+ a b) a]) 0 1))))
+
+  (defn fibonacci [n]
+    (nth n fibonacci-sequence))
+
+  (def fibonacci-sequence'
+    (lazy-cat [0 1] (map + fibonacci-sequence' (rest fibonacci-sequence'))))
+
+    #+END_SRC
+*** Single thread
+*** Concurrent walk
+Note that it is here that the externalised structure really shines. For the resulting state can safely be shared, inspected, and even thread locally modified, efficiently.
+#+BEGIN_SRC clojure
+
+#+END_SRC
+** Divide and conquerish
+The most important example relies on the 'matrix' approach to fibonacci. But it is also possible to do something similar with Collatz... Although much less useful.
+- Is it possible to find an algebraic form for powers of the collatz iteration? Of course it is. Is it possible to show something about the sequences that it generates or how fast it grows? Probably
+** Concurrent
+** Closed form
+Fibonacci sequence has a 'closed form' formula, whereas the Collatz sequences, as far as we know do not.
+** Imperative
+Note that in clojure the 'loop' is made such that it is actually a recursive function call. However, by imperative we usually mean that the state of the loop is stored outside of the loop, in some mutable data structure.
+#+BEGIN_SRC clojure 
+  (def fibonacci [n
+    )
+#+END_SRC
+
+** Trampoline
+Even in the absence of compiler level tail call optimisation the trampoline pattern makes deep, tail positioned, recursion possible.
+
+Trampoline implementation. Comlexity \(O(n\).
+#+BEGIN_SRC clojure
+
+#+END_SRC
+
+* Basic Literacy
+
+** Lambda Calculus
+Here we introduce the basic structure of the lambda calculus. Once, again, for the reason of making reading papers easier in the rest of the course.
+
+** Type declarations
+Note: This section would be nice to avoid, if it cannot be avoided then a custom syntax should be specified that lets the users express the algorithms
+in their natural form, i.e. making use of such declaration syntax as they will usually encounter. It must, however, be augmented with some form of ducktyping mechanism.
+The internals of such syntax is not important at this point and can be explained in later sections. It is hard to see how this section could be avoided completely since the papers will in general require that Haskell style declaration is familiar.
+** Data structures and data types
+- jargon: numeric, truthy
+- Nil
+- Number
+- String
+- Boolean
+- Keyword
+- Vector
+- List
+- Set
+- Map
+** Values
+- def
+- let
+- Destructuring
+  - Associative case: note may have many :keys
+** Functions
+- jargon: predicate
+- doc strings
+- fn
+- defn
+- Destructuring
+- Anonymous functions
+- Variable arity and multiple arity
+- Bonus: Maps, sets and vectors act as functions
+** Namespaces
+The way code is organised in the absence of classes.
+- doc strings
+  
+* Basic Clojure
+** Types
+** Correspondence
+| function | map | set    | vector  | list   |
+|----------+-----+--------+---------+--------|
+| filter   |     | select | filterv | filter |
+| map      |     |        | mapv    | map    |
+|          |     |        |         |        |
+* Functional core
+** Basics
+*** Functions
+**** Pure functions
+- why they matter
+*** Higher order functions
+Higher order functions return a function as their return value or take functions as arguments.
+**** Core examples
+- reduce
+  - bonus: reduced
+- filter / remove
+- map / mapcat
+- sort-by
+- comp
+**** Closures
+- What are they for?
+** Recursion
+Recursion in general as well as famous examples.
+*** Tail call optimised recursion
+- recur
+*** Mutual recursion
+- trampoline
+* Clojure Abstractions
+** Sequence
+
+** Metadata
+
+Metadata can be added to any object in clojure.
+- Bonus: type hints
+
+** Protocols
+#+begin_quote
+Protocol: Interfaces. Yes, that's right. That's what they used to call me. Interface. That was my name.
+You: Interface...
+Protocol: *I* am Protocol. And I return to you at the turning of the tide.
+#+end_quote
+
+Protocols are interfaces as they should have been.
+- IFn
+- Associative
+
+** Multimethods
+#+begin_quote
+Be water quote...
+#+end_quote
+
+When protocols aren't enough.
+- Polymorphism
+- Bonus: Hierarchies
+  
+** Records and custom data types
+- deftype
+  - Reduced
+- defrecord
+- Bonus: reify
+  
+* Persistent datastructures
+Basic overview of how persistent datastructures work, and how they are implemented
+- Pass by reference or by value
+- Why they work in a concurrent context (thread safety)
+- Queues and map entries
+- Bonus: Five finger tree (maybe?)
+- Bonus: Transients
+
+* Walk
+** Walks
+
+** Zippers
+
+*** Original paper
+- [[https://www.st.cs.uni-saarland.de/edu/seminare/2005/advanced-fp/docs/huet-zipper.pdf][Original Paper]]
+
+*** Zippers (in Clojure) in short
+
+- Credit
+- How to use them
+- MyZipper
+- Bonus: Zippers and DSL:s
+  1. Hiccup
+  2. Lambda calculus
+Despite the complexity of zippers in general there seems to be no good alternative. Reading the paper might make things a bit clearer on this front. There is definitely something off about zippers...
+
+Generically trees have a root, and nodes that consist of some data plus children. Now the children are stored in the node in some way. And it is perhaps here that the contention around zippers is the greatest.
+
+Consider a nested map as a tree. The root node is then clearly just the map. The children are the values stored under each key. But, is the key a part of the child or the parent? If it is a part of the child then the child nodes are not maps, rather they are key-value pairs. This inhomogeneity feels like incidental complexity. A zipper abstraction that attaches the addresses to the parent is intuitively more appealing. Interestingly this abstraction lends itself to a more compact form of 'pointer', one that looks exactly like the syntax used in '_-in' operations.
+
+It should work in cases where the structure is a nested vector, set, and list. This is done by having an update and a dissoc function for each case.
+
+- In the context of externalised decision trees it is here that the pruning of a shared tree becomes a tempting way to search for all solutions in a quite 'ad hoc' way. Requiring no actual partitioning of the search space. Which is a nice property in cases where it is not clear how easy any given partition is to search through. Again this occurs at no particular extra cost in complexity.
+- Note also that this creates the perfect stage for a dsl resembling specter later on, with some added bonuses to compensate for the reduced performance.
+
+
+** main hurdle
+Zippers suffer from being quite difficult to manage when the root is not of the same form as the nodes.
+
+* Lazy and dynamic programming
+The sequence abstraction is one of the ways one can view computation. The resulting set of tools are encapsulated by the transducer abstraction.
+** Lazyness
+- basic idea
+- examples of constructing a lazy-sequence
+  - iterate
+  - repeatedly
+  - lazy-seq
+- table of flavours
+  - Haskell
+  - Clojure
+  - Python
+- implementation considerations
+** Memoization
+- Basic idea
+- Memoization as a higher order function
+** Caching strategies
+- When you don't want to remember everything
+
+** Transducers
+- why transducers
+- implementation
+  
+** Recursion
+*** Memoization
+- memoized fibonacci
+**** Memoizing Collatz
+The naive way works, but we can do better and learn a thing or two about how to think about memoization in general. 
+*** Externalised traversal
+- fibonacci
+- collatz
+- sudoku
+- games and a*-traversal, etc.
+**** Sudoku
+Before anyone becomes upset I'll just mention that this isn't the best way to solve a sudoku but it is a good illustration of the principle under consideration.
+
+We begin by considering the decision tree that we would have to walk through. For each empty space there are at most 9 options. We will be able to exclude some of them but any one of them could be viable for some sudoku. Consequently we must model the entire tree and later, whilst walking, we will know not to walk down certain branches. And since the decision tree is computed lazily we will never have to 'realize' those branches we decide to omit.
+
+If we think of the matter as a nested map with each 'incomplete' sudoku. If we are to be as free as possible when solving sudokus we should at each level be able to choose any one particular slot to fill.
+Otherwise we will be restricted to solving it in some particular order, which can be done, but this is slightly more complicated, probably not worth it, so we'll aim for maximal freedom. This will mean there is a redundancy to our walk structure, which means we will have to make sure we are not doing extra work, i.e. checking the same solution several times.
+** Bonus: Chunks
+** Bonus: Implementing a lazy data-type  
+* Domain specific languages
+- Korsolang SQL and datomic
+- Esolang in general
+- Algebra as an example, matroids?
+
+A domain specific language, in contrast to a 'general purpose language', is a language with a limited intended domain. In some sense every library is a domain specific language when separated from the core language. It does not mean that the language isn't Turing complete, rather that it is focused on some particular niche. The most well known ones are probably html and css, the combo is incidentally turing complete when combined. The lisp syntax being minimal and 'macros' make it easy for programmers to create their own domain specific languages. These need not even be lispy. You can make a regular for loop work in clojure by creating a macro that acceps that particular syntax.
+
+#+BEGIN_SRC clojure
+  (defmacro forloop)
+#+END_SRC
+  
+Will do just that. You are free to choose everything about how you program in Clojure. In this section we will take a look at what makes this possible, when you should do it, and what the tools are.
+
+** Considerations
+- when are they apropriate
+- what is it specific to
+- design/adoption considerations
+  
+** Syntax tree
+- lisp and syntax trees
+  - sexps, etc.
+
+*** Bonus Mention: Combinators
+Combinators form another way of viewing computation.
+- A basic implementation in terms of a zipper.
+
+** Macros
+- homoiconicity and what it enables
+- basics of macros
+  
+** Hiccup
+- basic idea
+- basic implementation (using zippers)
+  
+** Lisp compiler
+- Lambda calculus
+
+** DSL as a library
+- core.logic
+- core.typed
+- core.match
+- etc.
+
+** DSL:s in the wild
+- Specter
+- Re-frame
+- Datascript
+- Harpoons
+
+* Parallel execution
+- divide and conquer
+** Reducers
+- Simple example for quicksort
+- Recursion in parallel
+
+* Concurrent and Asynchronous execution
+Basically an introduction to `core.async`, as well as agents, promises, futures, atoms, volatiles, etc.
+- Note this is also where callback hell breaks loose in many cases, introduce the main problems that result in callback hell and how they are solved by the abstractions.
+** Core support
+- agents
+- futures
+- promises
+- volatile
+- etc.
+
+** Async
+- go loops
+- channels
+
+* Clojure interop and the reader
+- clj, cljs, cljc, edn, ...
+* Specifications
+
+** Duck typing
+- what does it mean to quack and walk?
+- pre and post
+
+** Clojure spec and gen
+- basics
+- examples
+
+** Testing
+- generative testing
+- property based testing (invariants)
+* Bake in: Abstract Notions
+** Formal considerations
+- How the algebraic properties of the functions used to solve a problem effect the complexity of the solution
+- How such formal considerations impact on problem solving strategies one can employ
+** Monoids
+*** Examples
+- string + concatenation
+- sequence + concatenation
+- map + merge
+- set + union
+- numbers + addition (or any numeric op really)
+** Categories
+- Categories
+  - Protocols as categories
+  - Types as categories
+- Natural transformations
+- The two types of composition
+  - Concatenation
+  - Nesting
+- Product
+- Initial and Terminal objects
+- Monomorphisms and epimorphisms
+  - Do these have anything to do with programning concepts?
+- Equalizers and coequalizer
+*** Functors
+A functor acts on morphisms in a particular way.
+** Monad
+** Continuations
+* Finale I: Mixed relations
+Nothing tests ones understanding of the basic concepts of a programming language as greatly as to inflict a serious amount of pain onto it. Here we design a new data-type for clojure. One it did not ask for and more importantly one it doesn't want. And that is exactly why we will create it. We start of where Rich decided it wasn't worth the time and effort. By taking a closer look at the set library.
+
+- mathematical definition of a relation
+- interpretation of functions as a special type of relation
+- converting relations into functions
+- composing relations with relations
+- composing relations with functions
+- basic manipulations of a relation
+- advanced manipulation of a relation
+- tests and specs for our creation
+
+In the end one has something very much like a datastore in hand.
+* Finale II: React
+Creating something resemling react á la reagent is the idea. Mixing ideas regarding dsl:s and elaborating on the hiccup example from that section. In addition some interop will be used.
+* Bonus: Efficiency
+- Type hints
+- Transients
+* Bonus: Hosted languages
+- parasitic vs. symbiotic
+* Extra
+** Pattern matching
+[[https://www.cs.tufts.edu/~nr/cs257/archive/luc-maranget/jun08.pdf][Compiling Pattern Matching to good Decision Trees by Luc Maranget]]
