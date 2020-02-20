@@ -103,24 +103,26 @@ Note that it is here that the externalised structure really shines. For the resu
 #+END_SRC
 ** Divide and conquerish
 The most important example relies on the 'matrix' approach to fibonacci. But it is also possible to do something similar with Collatz... Although much less useful.
-- Is it possible to find an algebraic form for powers of the collatz iteration? Of course it is. Is it possible to show something about the sequences that it generates or how fast it grows? Probably
+- implement matrix form thingie
+- implement it without matrices (leveraging composition and memoization instead)
 ** Concurrent
+- Need some other toy problem here. Neither is fib, nor collatz derives any particular benefit from these techniques.
 ** Closed form
 Fibonacci sequence has a 'closed form' formula, whereas the Collatz sequences, as far as we know do not.
 ** Imperative
-Note that in clojure the 'loop' is made such that it is actually a recursive function call. However, by imperative we usually mean that the state of the loop is stored outside of the loop, in some mutable data structure.
+Note that in clojure the 'loop' is made such that it is actually a recursive function call. However, by imperative we usually mean that the state is stored in some mutable data structure, or something like that. Really this is just your good old loop dressed up in recursive clothes.
 #+BEGIN_SRC clojure 
-  (def fibonacci [n
-    )
 #+END_SRC
 
 ** Trampoline
-Even in the absence of compiler level tail call optimisation the trampoline pattern makes deep, tail positioned, recursion possible.
+Even in the absence of tail call optimisation the trampoline pattern makes deep, tail positioned, recursion possible.
+- trampoline clojure
 
-Trampoline implementation. Comlexity \(O(n\).
+Trampoline implementation.
 #+BEGIN_SRC clojure
 
 #+END_SRC
+
 
 * Basic Literacy
 
@@ -200,9 +202,11 @@ Metadata can be added to any object in clojure.
 
 ** Protocols
 #+begin_quote
-Protocol: Interfaces. Yes, that's right. That's what they used to call me. Interface. That was my name.
-You: Interface...
-Protocol: *I* am Protocol. And I return to you at the turning of the tide.
+- Protocol: Interface. Yes, that's right. That's what they used to call me. Interface. That was my name.
+
+- You: Interface...
+
+- Protocol: *I* am Protocol. And I return to you at the turning of the tide.
 #+end_quote
 
 Protocols are interfaces as they should have been.
